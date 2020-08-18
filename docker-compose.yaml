@@ -1,0 +1,45 @@
+version: '3'
+services:
+  web:
+    restart: always
+    container_name: todo_flask
+    build: .
+    command: bash -c "python main.py"
+    volumes:
+      - .:/base_app
+      - ./static:/base_app/static
+    ports:
+      - "8000:8000"
+    links:
+      - db-mongo
+  db-mongo:
+    image: mongo
+    restart: always
+    ports:
+      - '27017-27019:27017-27019'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: coba
+  mongo_express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    depends_on:
+      - 'db-mongo'
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: coba
+      ME_CONFIG_MONGODB_SERVER: db-mongo
+      ME_CONFIG_SITE_BASEURL: /mongonya
+  nginx:
+    image: nginx:alpine
+    container_name: flasktodo_nginx
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ./static:/base_app/static
+    depends_on:
+      - web
+      - mongo_express
+    ports:
+      - 80:80
